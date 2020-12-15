@@ -601,7 +601,10 @@ def get_columns(periodicity, period_list, accumulated_values=1, company=None, wi
 	if target_date:
 		target_date = getdate(target_date)
 
-	for period in period_list:
+	sorted_period_list = sorted(period_list,
+		key=lambda d: (cstr(d.sales_person_details.name if d.sales_person_details else ""), d.from_date.month, d.from_date.year))
+
+	for period in sorted_period_list:
 		if not with_sales_person or period.sales_person_details.name in sales_persons_with_entries:
 			target_period = None
 			if target_date and target_date >= period.from_date and target_date <= period.to_date:

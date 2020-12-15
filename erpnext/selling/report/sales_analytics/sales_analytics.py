@@ -94,6 +94,10 @@ class Analytics(object):
 
 		self.month_range = list(range(start_month_no, end_month_no + 1))
 
+
+		# sorted_period_list = sorted(period_list, key=lambda d: (cstr(d.sales_person_details.name if d.sales_person_details else ""), d.from_date.month, d.from_date.year))
+		period_list = []
+
 		for sales_person in self.sales_persons:
 			if sales_person.get('has_entry') or not self.filters.with_sales_person:
 				for end_date in self.periodic_daterange:
@@ -102,15 +106,21 @@ class Analytics(object):
 					label, key = self.get_period_label_key(period, sales_person.name)
 					end_date_month = end_date.month
 					if end_date_month in self.month_range:
-						self.columns.append({
+						period_list.append(frappe._dict({
 							"label": _(label),
 							"period_label": period,
 							"fieldname": key,
 							"fieldtype": "Float",
 							"period_column": True,
+							"end_date_month": end_date.month,
+							"end_date_year": end_date.year,
 							"sales_person": cstr( sales_person.name if sales_person.name else ""),
 							"width": 120
-						})
+						}))
+
+		sorted_period_list = sorted(period_list, key=lambda d: (cstr(d.sales_person), d.end_date_month, d.end_date_year))
+		self.columns.extend(sorted_period_list)
+
 	def get_period_label_key(self, period, sales_person):
 		label = "{0} {1}".format(sales_person or "No Sales Person", period) if self.filters.with_sales_person else period
 		key = scrub(label)
@@ -369,8 +379,8 @@ class Analytics(object):
 			year = get_fiscal_year(posting_date, company=self.filters.company)
 			period = str(year[0])
 
-		if self.filters.start_month and self.filters.end_month:
-			period = period + " " + str(self.months[start_month_no-1]) + " to " + str(self.months[end_month_no-1])
+		# if self.filters.start_month and self.filters.end_month and self.filters.range in ['Yearly', 'Quarterly']:
+		# 	period = period + " " + str(self.months[start_month_no-1]) + " to " + str(self.months[end_month_no-1])
 		return period
 
 	def get_period_date_ranges(self):
