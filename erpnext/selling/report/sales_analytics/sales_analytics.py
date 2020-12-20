@@ -94,8 +94,6 @@ class Analytics(object):
 
 		self.month_range = list(range(start_month_no, end_month_no + 1))
 
-
-		# sorted_period_list = sorted(period_list, key=lambda d: (cstr(d.sales_person_details.name if d.sales_person_details else ""), d.from_date.month, d.from_date.year))
 		period_list = []
 
 		for sales_person in self.sales_persons:
@@ -367,8 +365,7 @@ class Analytics(object):
 				self.entity_periodic_data[d.entity]['stock_uom'] = d.stock_uom
 
 	def get_period(self, posting_date):
-		start_month_no = month_to_number[self.filters.start_month]
-		end_month_no = month_to_number[self.filters.end_month]
+
 		if self.filters.range == 'Weekly':
 			period = "Week " + str(posting_date.isocalendar()[1]) + " " + str(posting_date.year)
 		elif self.filters.range == 'Monthly':
@@ -379,8 +376,6 @@ class Analytics(object):
 			year = get_fiscal_year(posting_date, company=self.filters.company)
 			period = str(year[0])
 
-		# if self.filters.start_month and self.filters.end_month and self.filters.range in ['Yearly', 'Quarterly']:
-		# 	period = period + " " + str(self.months[start_month_no-1]) + " to " + str(self.months[end_month_no-1])
 		return period
 
 	def get_period_date_ranges(self):

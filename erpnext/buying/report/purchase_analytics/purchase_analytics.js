@@ -8,27 +8,24 @@ frappe.query_reports["Purchase Analytics"] = {
 			fieldname: "tree_type",
 			label: __("Tree Type"),
 			fieldtype: "Select",
-			options: ["Supplier Group","Supplier","Item Group","Item"],
+			options: ["Supplier Group","Supplier","Item Group","Item","Brand"],
 			default: "Supplier",
 			reqd: 1
 		},
 		{
-			fieldname: "doc_type",
-			label: __("based_on"),
+			fieldname: "doctype",
+			label: __("Based On"),
 			fieldtype: "Select",
 			options: ["Purchase Order","Purchase Receipt","Purchase Invoice"],
 			default: "Purchase Invoice",
 			reqd: 1
 		},
 		{
-			fieldname: "value_quantity",
-			label: __("Value Or Qty"),
+			fieldname: "value_field",
+			label: __("Amount Or Qty"),
 			fieldtype: "Select",
-			options: [
-				{ "value": "Value", "label": __("Value") },
-				{ "value": "Quantity", "label": __("Quantity") },
-			],
-			default: "Value",
+			options: ["Net Amount", "Amount", "Stock Qty", "Contents Qty", "Transaction Qty"],
+			default: "Net Amount",
 			reqd: 1
 		},
 		{
@@ -65,42 +62,87 @@ frappe.query_reports["Purchase Analytics"] = {
 			],
 			default: "Monthly",
 			reqd: 1
-		}
-
+		},
+		{
+			fieldname: "supplier",
+			label: __("Supplier"),
+			fieldtype: "Link",
+			options: "Supplier"
+		},
+		{
+			fieldname: "supplier_group",
+			label: __("Supplier Group"),
+			fieldtype: "Link",
+			options: "Supplier Group"
+		},
+		{
+			fieldname: "item_code",
+			label: __("Item"),
+			fieldtype: "Link",
+			options: "Item"
+		},
+		{
+			fieldname: "item_group",
+			label: __("Item Group"),
+			fieldtype: "Link",
+			options: "Item Group"
+		},
+		{
+			fieldname: "brand",
+			label: __("Brand"),
+			fieldtype: "Link",
+			options: "Brand"
+		},
+		{
+			"fieldname":"cost_center",
+			"label": __("Cost Center"),
+			"fieldtype": "MultiSelectList",
+			get_data: function(txt) {
+				return frappe.db.get_link_options('Cost Center', txt, {
+					company: frappe.query_report.get_filter_value("company")
+				});
+			}
+		},
+		{
+			"fieldname":"project",
+			"label": __("Project"),
+			"fieldtype": "MultiSelectList",
+			get_data: function(txt) {
+				return frappe.db.get_link_options('Project', txt, {
+					company: frappe.query_report.get_filter_value("company")
+				});
+			}
+		},
 	],
 	after_datatable_render: function(datatable_obj) {
-		$(datatable_obj.wrapper).find(".dt-row-0").find('input[type=checkbox]').click();
+		const checkbox = $(datatable_obj.wrapper).find(".dt-row-0").find('input[type=checkbox]');
+		if(!checkbox.prop("checked")) {
+			checkbox.click();
+		}
 	},
 	get_datatable_options(options) {
 		return Object.assign(options, {
 			checkboxColumn: true,
 			events: {
 				onCheckRow: function(data) {
-					row_name = data[2].content;
-					length = data.length;
+					let row_name = data[2].content;
+					let period_columns = [];
+					$.each(frappe.query_report.columns || [], function(i, column) {
+						if (column.period_column) {
+							period_columns.push(i+2);
+						}
+					});
 
-					var tree_type = frappe.query_report.filters[0].value;
-
-					if(tree_type == "Supplier" || tree_type == "Item") {
-						row_values = data.slice(4,length-1).map(function (column) {
-							return column.content;
-						})
-					}
-					else {
-						row_values = data.slice(3,length-1).map(function (column) {
-							return column.content;
-						})
-					}
-
-					entry  = {
+					let row_values = period_columns.map(i => data[i].content);
+					let entry = {
 						'name':row_name,
 						'values':row_values
-					}
+					};
 
 					let raw_data = frappe.query_report.chart.data;
 					let new_datasets = raw_data.datasets;
 
-					var found = false;
+					let found = false;
 
 					for(var i=0; i < new_datasets.length;i++){
 						if(new_datasets[i].name == row_name){
@@ -117,16 +159,16 @@ frappe.query_reports["Purchase Analytics"] = {
 					let new_data = {
 						labels: raw_data.labels,
 						datasets: new_datasets
-					}
+					};
 
 					setTimeout(() => {
 						frappe.query_report.chart.update(new_data)
-					},500)
+					}, 500);
 
 
 					setTimeout(() => {
 						frappe.query_report.chart.draw(true);
-					}, 1000)
+					}, 1000);
 
 					frappe.query_report.raw_chart_data = new_data;
 				},
