@@ -551,7 +551,7 @@ class ReceivablePayableReport(object):
 				index = i
 				break
 
-		if index is None: index = 4
+		if index is None: index = 5
 		row['range' + str(index)] = row.outstanding
 
 		row.is_range_col = 1
